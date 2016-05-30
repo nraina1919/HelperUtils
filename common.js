@@ -8,7 +8,73 @@ var XhrWebstoreProduct = [];
 //This file contains the code which is common for the website
 
 //update the user activity time
-function saveSearchHistory() {
+function precheckOutNewUser() {
+    document.getElementById('preRegEle').style.display = 'block';
+    document.getElementById('preLoginEle').style.display = 'none';
+}
+
+//function saveSearchHistory() {
+//    if ($('#PageName').val() == '')
+//        return;
+
+//    $.ajax({
+//        url: '/home/updatesearchhistorydate',
+//        type: 'POST',
+//        async: false,
+//        cache: false,
+//        data: { pageName: $('#PageName').val() },
+//        success: function (result) {
+//            if (console && console.log) {
+//                console.log(result);
+//            }
+//        }
+//    });
+//}
+
+
+//managage back button click (and backspace)
+//var count = 0; // needed for safari
+//window.onload = function () {
+//    if (typeof history.pushState === "function") {
+//        history.pushState("back", null, null);
+//        window.onpopstate = function () {
+//            history.pushState('back', null, null);
+//            if (count == 1) {
+//                if (window.location.pathname.toLowerCase() === "/userorders/ordersummary") {
+//                    window.location = '/userorders/orders';
+//                }
+//                else {
+//                    window.location = window.history.back();
+//                    //history.go(-1);
+//                }
+//            }
+//        };
+//    }
+//}
+
+//$(window).bind('load', function () {
+//    if (typeof history.pushState === "function") {
+//        //history.pushState("back", null, null);
+//        window.onpopstate = function () {
+//            //history.pushState('back', null, null);
+//            if (window.location.pathname.toLowerCase() === "/userorders/ordersummary") {
+//                window.location = '/userorders/orders';
+//            }
+//            //else {
+//            //    window.location = window.location.pathname.toLowerCase();
+//            //    //return;
+//            //}
+
+//        };
+
+//    }
+
+//});
+
+//setTimeout(function () { count = 1; }, 200);
+
+$(window).bind('beforeunload', function () {
+    //this will work only for Chrome
     if ($('#PageName').val() == '')
         return;
 
@@ -16,12 +82,15 @@ function saveSearchHistory() {
         url: '/home/updatesearchhistorydate',
         type: 'POST',
         //async: false,
+        cache: false,
         data: { pageName: $('#PageName').val() },
         success: function (result) {
-            console.log(result);
+            if (console && console.log) {
+                console.log(result);
+            }
         }
     });
-}
+});
 
 //Decimal to currency formatter, puts commas at 1000th places
 Number.prototype.formatMoney = function (c, d, t) {

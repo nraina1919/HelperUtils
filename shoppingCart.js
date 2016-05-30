@@ -323,7 +323,7 @@ function postCartData(cart, callBack, isCms, cmsUIElements) {
                 return;
             }
             if (_data.IsException == true) {
-                displayInfo("Unable to add item in cart at this movement. Please try again later.");
+                displayInfo("Unable to add item in cart at this moment. Please try again later.");
                 callBack && callBack("exception", "");
             }
             else if (_data.IsError == true) {
@@ -629,7 +629,7 @@ function updateCartContent(deletedRows) {
     }
 }
 
-function archiveCartProduct(productId, ctId, rowid, eventElement, isCms, Uid, miscCallback) {
+function archiveCartProduct(productId, ctId, rowid, eventElement, isCms, Uid, miscCallback, pname) {
     try {
 
         if (eventElement && eventElement.length > 0) {
@@ -643,7 +643,7 @@ function archiveCartProduct(productId, ctId, rowid, eventElement, isCms, Uid, mi
             url: getSiteRootPath() + (isCms ? '/Cms/CmsCustomerArchiveCartProduct' : '/Cart/ArchiveCartProduct'),
             type: 'POST',
             contentType: 'application/json',
-            data: isCms ? JSON.stringify({ 'productId': productId, 'cartId': ctId, 'customerId': $('#hdnuid').val(), 'uniqueId': $('#hdnuname').val() }) : JSON.stringify({ 'productId': productId, 'cartId': ctId }),
+            data: isCms ? JSON.stringify({ 'productId': productId, 'cartId': ctId, 'customerId': $('#hdnuid').val(), 'uniqueId': $('#hdnuname').val() }) : JSON.stringify({ 'productId': productId, 'cartId': ctId, 'isGuestCartRemoval': guestnum, 'itemName': pname }),
             dataType: 'json',
             success: function (response) {
                 if (response.userSessionError) {
@@ -817,12 +817,12 @@ function updateCartAll(cartId, srcClass, srcLoaderClass, isCms, Uid) {
     });
     if (_pid.length > 0 && _rowId.length > 0) {
 
-        cartNotifyAlert(true, 'Are you sure you want to remove selected item(s) from the cart ?', 'Ok', 'Cancel', function ($okBtn, $cancelBtn, $confirmAlert, $contentElement, $loadingGif) {
+        cartNotifyAlert(true, 'Are you sure you want to remove selected item(s) from your cart ?', 'Ok', 'Cancel', function ($okBtn, $cancelBtn, $confirmAlert, $contentElement, $loadingGif) {
             var miscCallback = function () {
                 $loadingGif.hide();
                 //  $contentElement.html('Item(s) removed successfully.');
-
-                showSuccessMessageDialog('Item(s) removed successfully.', $('div[data-id="confirm-alert-box"]'), $('div[data-id="confirm-alert-message"]'));
+                cartNotifyAlert(true, 'Item(s) removed successfully.', 'Ok', undefined, undefined, undefined, true);
+                //showSuccessMessageDialog('Item(s) removed successfully.', $('div[data-id="confirm-alert-box"]'), $('div[data-id="confirm-alert-message"]'));
                 $okBtn.show();
                 $okBtn.unbind('click');
                 $okBtn.bind('click', function () { $confirmAlert.modal('hide'); $contentElement.html(''); $okBtn.unbind('click'); })
@@ -843,7 +843,7 @@ function updateCartAll(cartId, srcClass, srcLoaderClass, isCms, Uid) {
 }
 
 function updateCartSingle(pname, productId, cartId, rowId) {
-    cartNotifyAlert(true, 'Are you sure you want to remove <strong>' + pname + '</strong> from cart ?', 'Ok', 'Cancel', function () {
+    cartNotifyAlert(true, 'Are you sure you want to remove <strong>' + pname + '</strong> from your cart ?', 'Ok', 'Cancel', function () {
         var _pid = [];
         var _rowId = [];
         var _elements = [];
@@ -867,7 +867,7 @@ function updateCartSingle(pname, productId, cartId, rowId) {
 function checkoutArchiveItem(pname, productId, cartId, rowclass, formElementClass) {
     var _pid = [];
     _pid.push(productId);
-    cartNotifyAlert(true, 'Are you sure you want to remove <strong>' + pname + '</strong> from cart ?', 'Ok', 'Cancel', function ($okBtn, $cancelBtn, $confirmAlert, $contentElement, $loadingGif) {
+    cartNotifyAlert(true, 'Are you sure you want to remove <strong>' + pname + '</strong> from your cart ?', 'Ok', 'Cancel', function ($okBtn, $cancelBtn, $confirmAlert, $contentElement, $loadingGif) {
         var miscCallback = function () {
             $loadingGif.hide();
             cartNotifyAlert(true, 'Item(s) Removed Successfully.', 'Ok', 'Cancel', undefined, undefined, true);
@@ -929,7 +929,7 @@ function checkoutArchiveItem(pname, productId, cartId, rowclass, formElementClas
             updateCartCount();
         }
 
-        archiveCartProduct(_pid, cartId, undefined, undefined, false, undefined, miscCallback);
+        archiveCartProduct(_pid, cartId, undefined, undefined, false, undefined, miscCallback, pname);
     }, function () {
 
     }, undefined, true);
@@ -1207,6 +1207,9 @@ $(function () {
         BusinessLayerModule.BusinessLayer.ShowToolTip($(this), '');
     });
 
+    $('html.touch .cartquantity').keypress(function () {
+    })
+
     // Update shopping cart pricing total according to item quantity.
     $("body").on("keypress", '.cartquantity', function (e) {
         if (e.keyCode == 13) {
@@ -1257,7 +1260,11 @@ $(function () {
 
     $(document).on("click", 'a[data-type="checkout"]', function (e) {
         saveCartDetails(function () {
-            window.location.href = getSiteRootPath() + "/checkout";
+            if (isAuthenticatedUser) {
+                window.location.href = getSiteRootPath() + "/checkout";
+            } else {
+                window.location.href = getSiteRootPath() + '/precheckout?gid=' + guestCartSessionID;
+            }
         });
     });
 
@@ -1273,8 +1280,19 @@ $(function () {
         var invalidPriceItemLength = $('tr[data-error="price"]').length;
         var _msg = "";
         var _isError = false;
+        var _hasZeroPricingItem = false;
 
-        if (absoletedLength > 0 && invalidPriceItemLength > 0) {
+        $('.itemPriceNet').each(function (i, ele) {
+            if (parseFloat($(ele).val()) <= 0) {
+                _hasZeroPricingItem = true;
+                return;
+            }
+        });
+
+        if (_hasZeroPricingItem) {
+            _msg = "Some items are not eligible for checkout. Please remove them before proceeding for checkout.";
+            _isError = true;
+        } else if (absoletedLength > 0 && invalidPriceItemLength > 0) {
             _msg = "Please Remove Suspended And Invalid Price Items Before Proceed To Checkout";
             _isError = true;
         }
@@ -1286,12 +1304,21 @@ $(function () {
             _msg = "Please Remove Invalid Price Items Before Proceed To Checkout";
             _isError = true;
         }
+        else if (parseFloat($('#GrandTotal').html().replace('$', '').replace(/,/g, '')) < minimumCartAmount) {
+            _msg = "In order to process the request, the minimum cart amount should be atleast <strong>$" + minimumCartAmount + "</strong>";
+            _isError = true;
+        }
+        else if (isAuthenticatedUser && $("a[data-type='checkout']").data('hasaccount').toLowerCase() == 'false' && $("a[data-type='checkout']").data('isguestuser').toLowerCase() == 'false') {
+            _msg = "Your transaction cannot be completed. Please call Customer Service at  " + contactUsCustomerTollFree + ', ' + contactUsCustomerInternationalNoFormatted + '.';
+            _isError = true;
+        }
         if (_isError == true) {
             showMessageDialog(_msg);
             return false;
         }
 
         showLoader();//<LOADER WORKING QUERY
+        scrollToElement();
         var _cart = getCartItems();
         var _note = $('#Note').val();
         var _pcode = $('#pcode').val();
@@ -1571,9 +1598,40 @@ function userValidationFailedPrompt() {
 }
 
 
-// Calculate shopping cart price total.
+// Calculate shopping cart price total, Dont send parameters, ignore them used on checkout.js refer s&h matrix.
 function totalCount() {
     var _toatl = 0;
+    var removeShippingCharge = undefined;
+    var isPayCheck = undefined;
+    var isTBD = undefined;
+    var shippingPreference = $('#ShippingPreference').val();
+
+    if (shippingPreference == ShippingPreference.CustomerOwnAccount) {
+        removeShippingCharge = true;
+    }
+    else {
+        removeShippingCharge = false;
+    }
+
+    if ($('#PaymentMethod').val() == 'CreditCard') {
+        if (isAuthenticatedUser && hasCreditTerms) {
+            if (shippingPreference == ShippingPreference.AxletechPrepay) {//shipp - axletech
+                isPayCheck = true;
+                isTBD = false;
+            }
+            else {
+                isPayCheck = true;
+                isTBD = true;
+            }
+        }
+    }
+    else {
+        if (isAuthenticatedUser && hasCreditTerms) {
+            isPayCheck = true;
+            isTBD = true;
+        }
+    }
+
     $('.netpricetotal').filter(function () {
         _toatl = Number(parseFloat($(this).html().replace(/,/g, '').replace('$', ''))) + _toatl;
     });
@@ -1588,16 +1646,86 @@ function totalCount() {
     }
 
     if (isCheckOut) {
-        var _shippingCharges = parseFloat((_toatl * (clientShippingPercentage / 100)).toFixed(2));
-        var _unitCostCharges = parseFloat((_toatl * (clientUnitDownPercentage / 100)).toFixed(2));
+        var _shippingCostDefault = shippingChargeAmountDefault;
+        var _shippingCharges = evenRound(parseFloat(_toatl * (clientShippingPercentage / 100)), 2);
+        var _unitCostCharges = evenRound(parseFloat(_toatl * (clientUnitDownPercentage / 100)), 2);
 
         $('#UnitDownChrgs').html('$' + _unitCostCharges.formatMoney(2));
         $('#SubTotal').html('$' + _toatl.formatMoney(2));
-        $('#ShipChrgs').html('$' + _shippingCharges.formatMoney(2));
-        if ($('#OrderType').val() == 2)
-            $('#GrandTotal').html('$' + (_toatl + _shippingCharges + _unitCostCharges).formatMoney(2));
-        else
-            $('#GrandTotal').html('$' + (_toatl + _shippingCharges).formatMoney(2));
+        if (removeShippingCharge == true) {
+            $('.shipChargeFakeClass').hide();
+            $('#ShipChrgs').html('');
+        }
+        else {
+            if (isPayCheck) {
+                if (isTBD) {
+                    $('.shipChargeFakeClass').show();
+                    $('#ShipChrgs').html('TBD');
+                }
+                else {
+                    $('.shipChargeFakeClass').show();
+                    $('#ShipChrgs').html('$' + (_shippingCharges > _shippingCostDefault ? _shippingCharges : _shippingCostDefault).formatMoney(2));
+                }
+            }
+            else {
+                if (!hasCreditTerms) {
+                    $('.shipChargeFakeClass').show();
+                    $('#ShipChrgs').html('$' + (_shippingCharges > _shippingCostDefault ? _shippingCharges : _shippingCostDefault).formatMoney(2));
+                }
+                else {
+                    $('.shipChargeFakeClass').show();
+                    $('#ShipChrgs').html('TBD');
+                }
+            }
+        }
+
+        if ($('#OrderType').val() == 2)//<--UNIT DOWN
+        {
+            if (removeShippingCharge == true) {
+                $('#GrandTotal').html('$' + (_toatl + _unitCostCharges).formatMoney(2));
+            }
+            else {
+                if (isPayCheck) {
+                    if (isTBD) {
+                        $('#GrandTotal').html('$' + (_toatl + _unitCostCharges).formatMoney(2));
+                    }
+                    else {
+                        $('#GrandTotal').html('$' + (_toatl + (_shippingCharges > _shippingCostDefault ? _shippingCharges : _shippingCostDefault) + _unitCostCharges).formatMoney(2));
+                    }
+                }
+                else {
+                    if (!hasCreditTerms) {
+                        $('#GrandTotal').html('$' + (_toatl + (_shippingCharges > _shippingCostDefault ? _shippingCharges : _shippingCostDefault) + _unitCostCharges).formatMoney(2));
+                    }
+                    else {
+                        $('#GrandTotal').html('$' + (_toatl + _unitCostCharges).formatMoney(2));
+                    }
+                }
+            }
+        }
+        else {
+            if (removeShippingCharge == true) {
+                $('#GrandTotal').html('$' + (_toatl).formatMoney(2));
+            }
+            else {
+                if (isPayCheck) {
+                    if (isTBD) {
+                        $('#GrandTotal').html('$' + (_toatl).formatMoney(2));
+                    }
+                    else {
+                        $('#GrandTotal').html('$' + (_toatl + (_shippingCharges > _shippingCostDefault ? _shippingCharges : _shippingCostDefault)).formatMoney(2));
+                    }
+                }
+                else {
+                    if (!hasCreditTerms) {
+                        $('#GrandTotal').html('$' + (_toatl + (_shippingCharges > _shippingCostDefault ? _shippingCharges : _shippingCostDefault)).formatMoney(2));
+                    }
+                    else {
+                        $('#GrandTotal').html('$' + (_toatl).formatMoney(2));
+                    }
+                }
+            }
+        }
     }
     else {
         $('#SubTotal').html('$' + _toatl.formatMoney(2));

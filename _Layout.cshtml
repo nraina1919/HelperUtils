@@ -1,0 +1,331 @@
+﻿@using System.Web.Optimization
+@using AOHP.Models;
+
+@{
+    Analytic analytic = AOHP.Service.DBUser.GetAnalytic();
+    string analyticScriptContent = string.Empty;
+    if (analytic != null)
+    {
+        if (!string.IsNullOrEmpty(analytic.AnalyticContent))
+        {
+            analyticScriptContent = analytic.AnalyticContent;
+        }
+    }
+    var customerCurrency = (ViewContext != null && ViewContext.Controller is AOHP.Web.Controllers.BaseController && ((AOHP.Web.Controllers.BaseController)ViewContext.Controller).CurrentUser != null) ? ((AOHP.Web.Controllers.BaseController)ViewContext.Controller).CurrentUser.Currency : "";
+}
+@{
+    var contactUsDetail = WebHelper.GetContactUsDetail();
+
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="@ViewBag.Keywords" />
+    <meta name="description" content="@ViewBag.Description">
+    <meta name="robots" content="@ViewBag.Robots">
+    <meta name="author" content="">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>@(ViewBag.Title != null ? ViewBag.Title : "AxleTech International")</title>
+
+    @RenderSection("SEOLinks", required: false)
+
+    @Styles.Render("~/Content/css/bootstrap-style")
+    <!--[if  IE 9]>
+
+    <![endif]-->
+    <!-- Custom Fonts -->
+    @Styles.Render("~/Content/font-awesome/css/font-bundle")
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <link rel="shortcut icon" href="@Url.Content("~/Content/img/favicon.ico")">
+
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    @Scripts.Render("~/Scripts/jquery-jqueryVal-modernizr")
+    @Scripts.Render("~/Scripts/bootstrap-scriptJs")
+    @Scripts.Render("~/Bundle/Scripts/pages")
+    @Scripts.Render("~/Scripts/Script")
+    @Scripts.Render("~/bundles/Scripts/dropzone")
+    <script src="@Url.Content("~/Scripts/polyfiller.js")"></script>
+    <script src="@Url.Content("~/Scripts/js-editor/ckeditor.js")"></script>
+    <script src="@Url.Content("~/Scripts/js-editor/adapters/jquery.js")"></script>
+    @Html.Raw(analyticScriptContent)
+    <script type="text/javascript">
+        @*<!--[ THIS FUNCTION IS BEING USED FOR .JS AND .TS FILES FOR GETTING SITE ROOT PATH ]>
+    <!---->*@
+
+        var siteRootPath = "@Url.Content("~/")";
+        function getSiteRootPath() {
+            var temp = siteRootPath.charAt(siteRootPath.length - 1) == "/" ? siteRootPath.substring(0, siteRootPath.lastIndexOf("/")) : siteRootPath;
+            return temp;
+        }
+        var customerCurrency = '';
+    </script>
+
+   
+    <script type="text/javascript">
+        @*<!-- GLOBAL KEYS -->*@
+        var cgCategory = undefined;
+        var cgSubcategory = undefined;
+        var shippingChargeAmountDefault = parseFloat('@AOHP.Core.Helper.OrderDefaultShippingChargeAmount');
+        var minimumCartAmount = parseFloat('@AOHP.Core.Helper.OrderMinimumCartAmount');
+        var contactUsCustomerTollFree = '@contactUsDetail.CustomerTollFreeNo';
+        var contactUsCustomerInternationalNo = '@contactUsDetail.CustomerInternationalNo';
+        var contactUsCustomerInternationalNoFormatted = '@contactUsDetail.CustomerInternationalNoFormatted';
+
+        var contactUsTechnicalTollFree = '@contactUsDetail.TechnicalTollFreeNo';
+        var contactUsTechnicalInternationalNo = '@contactUsDetail.TechnicalInternationalNo';
+        var contactUsTechnicalInternationalNoFormatted = '@contactUsDetail.TechnicalInternationalNoFormatted';
+
+        var SearchHistory = function () {
+            this.UserIP = null;
+            this.UserSessionID = null;
+            this.IsDevice = null;
+            this.PageName = null;
+            this.UserID = null;
+            this.PartNumber = null;
+            this.PartDescription = null;
+            this.Category = null;
+            this.SubCategory = null;
+            this.SearchKeyword = null;
+            this.PartQuantity = null;
+        }
+
+        SearchHistory.prototype = new Object();
+        var isAuthenticatedUser = false;
+        var guestCartSessionID = '@(Session != null && Session[AOHP.Core.Helper.GUEST_USER_CART_CHECKOUT_SESSION_KEY] != null ? Session[AOHP.Core.Helper.GUEST_USER_CART_CHECKOUT_SESSION_KEY] : "")';
+        var guestkey = '@AOHP.Core.Helper.GUEST_USER_COOKIE_KEY';
+        var guestnum = 0;
+        var hasCreditTerms = false;
+        var TBDShipping = { SetTrue: true, SetFalse: false }
+        var ShippingPreference = { AxletechPrepay: '2', CustomerOwnAccount: '1' }
+    </script>
+    @if (this.User != null && this.User.Identity != null && this.User.Identity.IsAuthenticated)
+    {
+        <script>
+            isAuthenticatedUser = true;
+        </script>
+    }
+    else
+    {
+        <script>
+            isAuthenticatedUser = false;
+        </script>
+    }
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            if (isIE() != false && isIE() < 10) {
+                $("<link/>", {
+                    rel: "stylesheet",
+                    type: "text/css",
+                    href: "@Url.Content("~/Content/css/ie9.css")"
+                }).appendTo("head");
+            };
+        })
+        $(document).ready(function () {
+            if (isIE() != false) {
+                $("<link/>", {
+                    rel: "stylesheet",
+                    type: "text/css",
+                    href: "@Url.Content("~/Content/css/ie.css")"
+                }).appendTo("head");
+            };
+        })
+
+    </script>
+</head>
+<body>
+
+    <input type="hidden" id="PageName" name="PageName" value="@Session["PageNameForEndClient"]" />
+    @Html.Partial("HeaderPartial")
+    @RenderBody()
+    @Html.Partial("FooterPartial")
+
+    <div class="modal fade" id="tc-notify-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog ">
+            <div class="modal-content modal-cart">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 id="tc-notify-message" class="modal-title">Terms and Conditions</h4>
+                </div>
+                <div class="modal-body terms-scroll">
+                    @{Html.RenderAction("TermsAndConditions", "Home", new { isMain = false });}
+                </div>
+                <div class="modal-footer">
+                    <input type="button" id="btnTC" class="btn btn-blue" value="Ok" onclick="termsConditions(false);" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- notification Modal -->
+    <div class="modal fade" id="divNotifyDialogue" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="false">
+        <div class="modal-dialog ">
+            <div class="modal-content modal-cart">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="message"></h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Notification Mail Alert for In STOCK -->
+
+    <div class="modal fade" id="notifyModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog " role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Notification</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-sm-8 col-sm-offset-2">
+                            <p>We will send you an email when the product(s) are available for purchase.</p>
+                            <input value="@ViewBag.userEmailId" data-attr-emailid="@ViewBag.userEmailId" id="txtEmailToNotify" class="form-control" type="email" placeholder="abc@mail.com" />
+                            <div class="red-txt hide errornotify" id="divErrorNotify"></div>
+                            <div id="saveNotificationLoader" class="loader-savecart hide text-center">
+                                <span>Please wait...</span>
+                                <img src="@Url.Content("~/Content/img/loading.gif")" alt="loader" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="button" id="btnEmailToNotify" class="btn btn-blue" value="Subscribe" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal for Notification Mail Alert for In STOCK -->
+
+
+    <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog " role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="btnClose"><span aria-hidden="true">&times;</span></button>
+                    <h3 class="modal-title" id="loginModalLabel">Login</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-sm-8 col-xs-10 col-xs-offset-1 col-sm-offset-2 modal-login">
+                            <div class=" account-inner">
+
+
+
+
+                                <div class="form-group margin-bottom-10">
+                                    <label for="" class="control-label">User ID: <span id="userError" class="text-red "></span><span class="text-red no-margin  height-error-msg" id="loginError"></span></label>
+                                    <div class="">
+                                        <input type="text" id="username" class="form-control input-lg" placeholder="User ID" />
+
+
+                                    </div>
+                                </div>
+
+                                <div class="form-group margin-bottom-10">
+                                    <label for="" class=" control-label">Password: <span id="passwordError" class="text-red"></span></label>
+                                    <div class="modal-password">
+                                        <input type="password" id="pass" class="form-control input-lg" placeholder="Password" />
+
+
+
+                                    </div>
+                                </div>
+                                <div class="form-group margin-bottom-0">
+                                    <div class="">
+                                        <div class="checkbox no-margin">
+                                            <label>
+                                                <input type="checkbox" id="remember_me" />
+                                                Remember me
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group margin-bottom-5">
+                                    <div class="">
+
+                                        <span class="input-group-btn">
+                                            <button type="submit" class="btn btn-blue btn-block btn-lg" id="btnLogin">Login</button>
+                                            <span class="loaderLoginFakeClass summary-loader" style="display: none;" title="please wait...">
+                                                <button type="submit" class="btn btn-border btn-block btn-lg" id="btnLogin">Logging..</button>
+                                            </span>
+                                    </div>
+                                </div>
+                                <div class="form-group margin-bottom-0">
+                                    <div class="">
+                                        <a class="underline" id="forgotLink" data-toggle="collapse" href="#forgot-input" aria-expanded="false" aria-controls="forgot-input">Forgot Password ?</a>
+                                        <div class="collapse" id="forgot-input">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control input-lg" id="userEmail" placeholder="yourmail@mail.com">
+                                                <span class="input-group-btn">
+                                                    <button class="btn btn-border btn-lg" type="button" id="btnForgotPassword"><i class="fa fa-envelope"></i>Mail</button>
+                                                    <span class="loaderForgotFakeClass summary-loader" style="display: none;" title="please wait...">
+                                                        <img src="@Url.Content("~/Content/img/loader-arrow.gif")" alt="loader" />
+                                                    </span>
+                                                </span>
+                                            </div>
+                                            <p class="min-height-20 text-right"><span class="text-red no-margin  height-error-msg" id="errorMsg"></span></p>
+                                            <!-- /input-group -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade " id="displayImageModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1">
+        <div class="modal-dialog " role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel1">Image</h4>
+                </div>
+                <div class="modal-body full-product-img">
+                    <div class="row">
+
+                        <div class="col-sm-12 search-lg-image">
+                            <img class="img-responsive" data-key="product-img" style="display:none;" onerror="this.src='@AOHP.Core.UrlHelper.PartImageNotFoundUrl()'" />
+                            <div id="divLargeImageLoader">
+                                <div class="back-drop"></div>
+                                <div class="loader search-load">
+                                    <img class="img-responsive" onerror="this.src='@AOHP.Core.UrlHelper.PartImageNotFoundUrl()'" src="@Url.Content("~/Content/img/load.GIF")" alt="load" />
+                                    <p>Please Wait</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                @* <div class="modal-footer">
+                        <input type="button" id="btnEmailToNotify" class="btn btn-blue" value="Subscribe" />
+                    </div>*@
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script src="@Url.Content("~/Scripts/pages/ForgotPassword.js")"></script>
+    <script src="@Url.Content("~/Scripts/pages/login.js")"></script>
+
+
+</body>
+</html>
